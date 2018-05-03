@@ -32,7 +32,7 @@ Result fsprInitialize(void) {
 
 }
 
-void fsldrExit(void) {
+void fsprExit(void) {
     if (atomicDecrement64(&g_fsprRefCnt) == 0)
         serviceClose(&g_fsprSrv);
 }
