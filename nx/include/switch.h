@@ -40,6 +40,7 @@ extern "C" {
 #include "switch/services/applet.h"
 #include "switch/services/audin.h"
 #include "switch/services/audout.h"
+#include "switch/services/csrng.h"
 //#include "switch/services/bsd.h" Use switch/runtime/devices/socket.h instead
 #include "switch/services/fatal.h"
 #include "switch/services/time.h"
@@ -53,6 +54,7 @@ extern "C" {
 #include "switch/services/pm.h"
 #include "switch/services/set.h"
 #include "switch/services/lr.h"
+#include "switch/services/spl.h"
 
 #include "switch/gfx/gfx.h"
 #include "switch/gfx/binder.h"
