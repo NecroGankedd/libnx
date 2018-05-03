@@ -26,10 +26,12 @@ Result fsprInitialize(void) {
 
     if (R_SUCCEEDED(rc) && kernelAbove400()) {
         rc = fsprSetCurrentProcess();
+        if (R_FAILED(rc)) {
+            fsprExit();
+        }
     }
 
     return rc;
-
 }
 
 void fsprExit(void) {
@@ -37,7 +39,7 @@ void fsprExit(void) {
         serviceClose(&g_fsprSrv);
 }
 
-Result fsprRegisterProgram(u64 pid, u64 titleID, u64 storageID, const void *fs_access_header, size_t fah_size, const void *fs_access_control, size_t fac_size) {
+Result fsprRegisterProgram(u64 pid, u64 titleID, FsStorageId storageID, const void *fs_access_header, size_t fah_size, const void *fs_access_control, size_t fac_size) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -183,4 +185,3 @@ Result fsprSetEnabledProgramVerification(bool enabled) {
     
     return rc;
 }
-
