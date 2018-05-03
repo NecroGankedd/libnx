@@ -117,7 +117,7 @@ Result fsprUnregisterProgram(u64 pid) {
     return rc;
 }
 
-Result fsprSetCurrentProcess() {
+Result fsprSetCurrentProcess(void) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
