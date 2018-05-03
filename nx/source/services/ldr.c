@@ -12,7 +12,7 @@ static Service g_shellSrv, g_dmntSrv, g_pmSrv;
 static u64 g_shellRefCnt, g_dmntRefCnt, g_pmRefCnt;
 
 /* Service init/exit helpers. */
-Result _ldrSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
+static Result _ldrSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
     atomicIncrement64(refcnt);
     
     if (serviceIsActive(srv))
@@ -21,7 +21,7 @@ Result _ldrSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
     return smGetService(srv, name);
 }
 
-void _ldrSrvExit(Service *srv, u64 *refcnt) {
+static void _ldrSrvExit(Service *srv, u64 *refcnt) {
     if (atomicDecrement64(refcnt) == 0)
         serviceClose(srv);
 }
@@ -50,7 +50,7 @@ void ldrPmExit(void) {
     return _ldrSrvExit(&g_pmSrv, &g_pmRefCnt);
 }
 
-Result _ldrAddTitleToLaunchQueue(Service *srv, u64 tid, void *args, size_t args_size) {
+static Result _ldrAddTitleToLaunchQueue(Service *srv, u64 tid, const void *args, size_t args_size) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -85,7 +85,7 @@ Result _ldrAddTitleToLaunchQueue(Service *srv, u64 tid, void *args, size_t args_
     return rc;
 }
 
-Result _ldrClearLaunchQueue(Service *srv) {
+static Result _ldrClearLaunchQueue(Service *srv) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -116,7 +116,7 @@ Result _ldrClearLaunchQueue(Service *srv) {
     return rc;
 }
 
-Result ldrShellAddTitleToLaunchQueue(u64 tid, void *args, size_t args_size) {
+Result ldrShellAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size) {
     return _ldrAddTitleToLaunchQueue(&g_shellSrv, tid, args, args_size);
 }
 
@@ -124,7 +124,7 @@ Result ldrShellClearLaunchQueue(void) {
     return _ldrClearLaunchQueue(&g_shellSrv);
 }
 
-Result ldrDmntAddTitleToLaunchQueue(u64 tid, void *args, size_t args_size) {
+Result ldrDmntAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size) {
     return _ldrAddTitleToLaunchQueue(&g_dmntSrv, tid, args, args_size);
 }
 

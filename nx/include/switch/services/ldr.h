@@ -37,10 +37,10 @@ void ldrDmntExit(void);
 Result ldrPmInitialize(void);
 void ldrPmExit(void);
 
-Result ldrShellAddTitleToLaunchQueue(u64 tid, void *args, size_t args_size);
+Result ldrShellAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size);
 Result ldrShellClearLaunchQueue(void);
 
-Result ldrDmntAddTitleToLaunchQueue(u64 tid, void *args, size_t args_size);
+Result ldrDmntAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size);
 Result ldrDmntClearLaunchQueue(void);
 Result ldrDmntGetNsoInfos(u64 pid, LoaderNsoInfo *out_nso_infos, size_t out_size, u32 *num_out);
 

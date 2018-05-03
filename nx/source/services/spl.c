@@ -12,12 +12,12 @@ static Service g_splSrv, g_splCryptoSrv, g_splSslSrv, g_splEsSrv, g_splFsSrv, g_
 static u64 g_splRefCnt, g_splCryptoRefCnt, g_splSslRefCnt, g_splEsRefCnt, g_splFsRefCnt, g_splManuRefCnt;
 
 /* Helper prototypes for accessing handles. */
-Service *_splGetGeneralSrv(void);
-Service *_splGetCryptoSrv(void);
-Service *_splGetRsaSrv(void);
+static Service *_splGetGeneralSrv(void);
+static Service *_splGetCryptoSrv(void);
+static Service *_splGetRsaSrv(void);
 
-Service *_splGetEsSrv(void);
-Service *_splGetFsSrv(void);
+static Service *_splGetEsSrv(void);
+static Service *_splGetFsSrv(void);
 
 Service *_splGetGeneralSrv(void) {
     if (!kernelAbove400()) {
@@ -72,7 +72,7 @@ Service *_splGetFsSrv(void) {
 }
 
 /* There are like six services, so these helpers will initialize/exit the relevant services. */
-Result _splSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
+static Result _splSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
     atomicIncrement64(refcnt);
     
     if (serviceIsActive(srv))
@@ -81,7 +81,7 @@ Result _splSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
     return smGetService(srv, name);
 }
 
-void _splSrvExit(Service *srv, u64 *refcnt) {
+static void _splSrvExit(Service *srv, u64 *refcnt) {
     if (atomicDecrement64(refcnt) == 0)
         serviceClose(srv);
 }
@@ -792,7 +792,7 @@ Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, 
 }
 
 /* Helper function for RSA key importing. */
-Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+static Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -831,7 +831,7 @@ Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, const void *sealed_ke
     return rc;
 }
 
-Result _splSecureExpMod(Service *srv, u64 cmd_id, const void *input, const void *modulus, void *dst) {
+static Result _splSecureExpMod(Service *srv, u64 cmd_id, const void *input, const void *modulus, void *dst) {
     IpcCommand c;
     ipcInitialize(&c);
     
