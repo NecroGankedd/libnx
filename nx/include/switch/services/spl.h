@@ -27,21 +27,21 @@ typedef enum {
     SplConfigItem_Package2Hash = 17
 } SplConfigItem;
 
-Result csrngInitialize(void);
-void csrngExit(void);
-
-Result csrngGetRandomBytes(void *out, size_t out_size);
-
 Result splInitialize(void);
 void splExit(void);
+
 Result splCryptoInitialize(void);
 void splCryptoExit(void);
+
 Result splEsInitialize(void);
 void splEsExit(void);
+
 Result splSslInitialize(void);
 void splSslExit(void);
+
 Result splFsInitialize(void);
 void splFsExit(void);
+
 Result splManuInitialize(void);
 void splManuExit(void);
 
