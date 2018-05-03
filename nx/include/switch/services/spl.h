@@ -26,12 +26,12 @@ typedef enum {
     SplConfigItem_IsKiosk = 14,
     SplConfigItem_NewHardwareType = 15,
     SplConfigItem_NewKeyGeneration = 16,
-    SplConfigItem_Package2Hash = 17
+    SplConfigItem_Package2Hash = 17,
 } SplConfigItem;
 
 typedef enum {
     RsaKeyVersion_Deprecated = 0,
-    RsaKeyVersion_Extended = 1
+    RsaKeyVersion_Extended = 1,
 } RsaKeyVersion;
 
 Result splInitialize(void);
@@ -53,38 +53,38 @@ Result splManuInitialize(void);
 void splManuExit(void);
 
 Result splGetConfig(SplConfigItem config_item, u64 *out_config);
-Result splUserExpMod(void *input, void *modulus, void *exp, size_t exp_size, void *dst);
+Result splUserExpMod(const void *input, const void *modulus, const void *exp, size_t exp_size, void *dst);
 Result splSetConfig(SplConfigItem config_item, u64 value);
 Result splGetRandomBytes(void *out, size_t out_size);
-Result splIsDevelopment(u8 *out_is_development);
+Result splIsDevelopment(bool *out_is_development);
 Result splSetSharedData(u32 value);
 Result splGetSharedData(u32 *out_value);
 
-Result splCryptoGenerateAesKek(void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek);
-Result splCryptoLoadAesKey(void *sealed_kek, void *wrapped_key, u32 keyslot);
-Result splCryptoGenerateAesKey(void *sealed_kek, void *wrapped_key, void *out_sealed_key);
-Result splCryptoDecryptAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
-Result splCryptoCryptAesCtr(void *input, void *output, size_t size, void *ctr);
-Result splCryptoComputeCmac(void *input, size_t size, u32 keyslot, void *out_cmac);
+Result splCryptoGenerateAesKek(const void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek);
+Result splCryptoLoadAesKey(const void *sealed_kek, const void *wrapped_key, u32 keyslot);
+Result splCryptoGenerateAesKey(const void *sealed_kek, const void *wrapped_key, void *out_sealed_key);
+Result splCryptoDecryptAesKey(const void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
+Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, const void *ctr);
+Result splCryptoComputeCmac(const void *input, size_t size, u32 keyslot, void *out_cmac);
 Result splCryptoLockAesEngine(u32 *out_keyslot);
 Result splCryptoUnlockAesEngine(u32 keyslot);
 Result splCryptoGetSecurityEngineEvent(Handle *out_event);
 
-Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size);
+Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size);
 
-Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
-Result splSslSecureExpMod(void *input, void *modulus, void *dst);
+Result splSslLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
+Result splSslSecureExpMod(const void *input, const void *modulus, void *dst);
 
-Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
-Result splEsUnwrapRsaOaepWrappedTitlekey(void *rsa_wrapped_titlekey, void *modulus, void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey);
-Result splEsUnwrapAesWrappedTitlekey(void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey);
-Result splEsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
-Result splEsSecureExpMod(void *input, void *modulus, void *dst);
+Result splEsLoadRsaOaepKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
+Result splEsUnwrapRsaOaepWrappedTitlekey(const void *rsa_wrapped_titlekey, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey);
+Result splEsUnwrapAesWrappedTitlekey(const void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey);
+Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
+Result splEsSecureExpMod(const void *input, const void *modulus, void *dst);
 
-Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
-Result splFsSecureExpMod(void *input, void *modulus, void *dst);
-Result splFsGenerateSpecificAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
-Result splFsLoadTitlekey(void *sealed_titlekey, u32 keyslot);
+Result splFsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
+Result splFsSecureExpMod(const void *input, const void *modulus, void *dst);
+Result splFsGenerateSpecificAesKey(const void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
+Result splFsLoadTitlekey(const void *sealed_titlekey, u32 keyslot);
 Result splFsGetPackage2Hash(void *out_hash);
 
-Result splManuEncryptRsaKeyForImport(void *sealed_kek_pre, void *wrapped_key_pre, void *sealed_kek_post, void *wrapped_kek_post, u32 option, void *wrapped_rsa_key, void *out_wrapped_rsa_key, size_t rsa_key_size);
+Result splManuEncryptRsaKeyForImport(const void *sealed_kek_pre, const void *wrapped_key_pre, const void *sealed_kek_post, const void *wrapped_kek_post, u32 option, const void *wrapped_rsa_key, void *out_wrapped_rsa_key, size_t rsa_key_size);

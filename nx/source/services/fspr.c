@@ -152,7 +152,7 @@ Result fsprSetCurrentProcess() {
 }
 
 
-Result fsprSetEnabledProgramVerification(u8 enabled) {
+Result fsprSetEnabledProgramVerification(bool enabled) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -165,7 +165,7 @@ Result fsprSetEnabledProgramVerification(u8 enabled) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 256;
-    raw->enabled = enabled;
+    raw->enabled = enabled ? 1 : 0;
     
     Result rc = serviceIpcDispatch(&g_fsprSrv);
     

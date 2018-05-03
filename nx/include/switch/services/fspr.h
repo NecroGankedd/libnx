@@ -15,4 +15,4 @@ void fsprExit(void);
 Result fsprRegisterProgram(u64 pid, u64 titleID, u64 storageID, const void *fs_access_header, size_t fah_size, const void *fs_access_control, size_t fac_size);
 Result fsprUnregisterProgram(u64 pid);
 Result fsprSetCurrentProcess(void);
-Result fsprSetEnabledProgramVerification(u8 enabled);
+Result fsprSetEnabledProgramVerification(bool enabled);

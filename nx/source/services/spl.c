@@ -205,7 +205,7 @@ Result splGetConfig(SplConfigItem config_item, u64 *out_config) {
     return rc;
 }
 
-Result splUserExpMod(void *input, void *modulus, void *exp, size_t exp_size, void *dst) {
+Result splUserExpMod(const void *input, const void *modulus, const void *exp, size_t exp_size, void *dst) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -309,7 +309,7 @@ Result splGetRandomBytes(void *out, size_t out_size) {
     return rc;
 }
 
-Result splIsDevelopment(u8 *out_is_development) {
+Result splIsDevelopment(bool *out_is_development) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -337,7 +337,7 @@ Result splIsDevelopment(u8 *out_is_development) {
 
         rc = resp->result;
         if (R_SUCCEEDED(rc)) {
-            *out_is_development = resp->is_development;
+            *out_is_development = resp->is_development != 0;
         }
     }
 
@@ -414,7 +414,7 @@ Result splGetSharedData(u32 *out_value) {
 }
 
 /* SPL ICryptoService functionality. */
-Result splCryptoGenerateAesKek(void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek) {
+Result splCryptoGenerateAesKek(const void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -455,7 +455,7 @@ Result splCryptoGenerateAesKek(void *wrapped_kek, u32 key_generation, u32 option
     return rc;
 }
 
-Result splCryptoLoadAesKey(void *sealed_kek, void *wrapped_key, u32 keyslot) {
+Result splCryptoLoadAesKey(const void *sealed_kek, const void *wrapped_key, u32 keyslot) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -492,7 +492,7 @@ Result splCryptoLoadAesKey(void *sealed_kek, void *wrapped_key, u32 keyslot) {
     return rc;
 }
 
-Result splCryptoGenerateAesKey(void *sealed_kek, void *wrapped_key, void *out_sealed_key) {
+Result splCryptoGenerateAesKey(const void *sealed_kek, const void *wrapped_key, void *out_sealed_key) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -531,7 +531,7 @@ Result splCryptoGenerateAesKey(void *sealed_kek, void *wrapped_key, void *out_se
     return rc;
 }
 
-Result splCryptoDecryptAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key) {
+Result splCryptoDecryptAesKey(const void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -572,7 +572,7 @@ Result splCryptoDecryptAesKey(void *wrapped_key, u32 key_generation, u32 option,
     return rc;
 }
 
-Result splCryptoCryptAesCtr(void *input, void *output, size_t size, void *ctr) {
+Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, const void *ctr) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -608,7 +608,7 @@ Result splCryptoCryptAesCtr(void *input, void *output, size_t size, void *ctr) {
     return rc;
 }
 
-Result splCryptoComputeCmac(void *input, size_t size, u32 keyslot, void *out_cmac) {
+Result splCryptoComputeCmac(const void *input, size_t size, u32 keyslot, void *out_cmac) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -751,7 +751,7 @@ Result splCryptoGetSecurityEngineEvent(Handle *out_event) {
 }
 
 /* SPL IRsaService functionality. NOTE: IRsaService is not a real part of inheritance, unlike ICryptoService/IGeneralService. */
-Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size) {
+Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -792,7 +792,7 @@ Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrappe
 }
 
 /* Helper function for RSA key importing. */
-Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -831,7 +831,7 @@ Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, void *sealed_kek, voi
     return rc;
 }
 
-Result _splSecureExpMod(Service *srv, u64 cmd_id, void *input, void *modulus, void *dst) {
+Result _splSecureExpMod(Service *srv, u64 cmd_id, const void *input, const void *modulus, void *dst) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -867,20 +867,20 @@ Result _splSecureExpMod(Service *srv, u64 cmd_id, void *input, void *modulus, vo
 }
 
 /* SPL ISslService functionality. */
-Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result splSslLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     return _splImportSecureExpModKey(&g_splSslSrv, 26, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
 }
 
-Result splSslSecureExpMod(void *input, void *modulus, void *dst) {
+Result splSslSecureExpMod(const void *input, const void *modulus, void *dst) {
     return _splSecureExpMod(&g_splSslSrv, 27, input, modulus, dst);
 }
 
 /* SPL IEsService functionality. */
-Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result splEsLoadRsaOaepKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     return _splImportSecureExpModKey(_splGetEsSrv(), 17, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
 }
 
-Result splEsUnwrapRsaOaepWrappedTitlekey(void *rsa_wrapped_titlekey, void *modulus, void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey) {
+Result splEsUnwrapRsaOaepWrappedTitlekey(const void *rsa_wrapped_titlekey, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -921,7 +921,7 @@ Result splEsUnwrapRsaOaepWrappedTitlekey(void *rsa_wrapped_titlekey, void *modul
     return rc;
 }
 
-Result splEsUnwrapAesWrappedTitlekey(void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey) {
+Result splEsUnwrapAesWrappedTitlekey(const void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -960,24 +960,24 @@ Result splEsUnwrapAesWrappedTitlekey(void *aes_wrapped_titlekey, u32 key_generat
     return rc;
 }
 
-Result splEsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     return _splImportSecureExpModKey(&g_splEsSrv, 28, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
 }
 
-Result splEsSecureExpMod(void *input, void *modulus, void *dst) {
+Result splEsSecureExpMod(const void *input, const void *modulus, void *dst) {
     return _splSecureExpMod(&g_splEsSrv, 29, input, modulus, dst);
 }
 
 /* SPL IFsService functionality. */
-Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result splFsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     return _splImportSecureExpModKey(_splGetFsSrv(), 9, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
 }
 
-Result splFsSecureExpMod(void *input, void *modulus, void *dst) {
+Result splFsSecureExpMod(const void *input, const void *modulus, void *dst) {
     return _splSecureExpMod(_splGetFsSrv(), 10, input, modulus, dst);
 }
 
-Result splFsGenerateSpecificAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key) {
+Result splFsGenerateSpecificAesKey(const void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1018,7 +1018,7 @@ Result splFsGenerateSpecificAesKey(void *wrapped_key, u32 key_generation, u32 op
     return rc;
 }
 
-Result splFsLoadTitlekey(void *sealed_titlekey, u32 keyslot) {
+Result splFsLoadTitlekey(const void *sealed_titlekey, u32 keyslot) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1089,7 +1089,7 @@ Result splFsGetPackage2Hash(void *out_hash) {
 }
 
 /* SPL IManuService funcionality. */
-Result splManuEncryptRsaKeyForImport(void *sealed_kek_pre, void *wrapped_key_pre, void *sealed_kek_post, void *wrapped_kek_post, u32 option, void *wrapped_rsa_key, void *out_wrapped_rsa_key, size_t rsa_key_size) {
+Result splManuEncryptRsaKeyForImport(const void *sealed_kek_pre, const void *wrapped_key_pre, const void *sealed_kek_post, const void *wrapped_kek_post, u32 option, const void *wrapped_rsa_key, void *out_wrapped_rsa_key, size_t rsa_key_size) {
     IpcCommand c;
     ipcInitialize(&c);
     

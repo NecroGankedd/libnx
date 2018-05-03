@@ -25,7 +25,7 @@ typedef struct {
 typedef struct {
     u64 base_address;
     u64 size;
-    unsigned char build_id[0x20];
+    u8 build_id[0x20];
 } LoaderNsoInfo;
 
 Result ldrShellInitialize(void);
