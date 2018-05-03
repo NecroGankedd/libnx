@@ -967,3 +967,123 @@ Result splEsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapp
 Result splEsSecureExpMod(void *input, void *modulus, void *dst) {
     return _splSecureExpMod(&g_splEsSrv, 29, input, modulus, dst);
 }
+
+/* SPL IFsService functionality. */
+Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+    return _splImportSecureExpModKey(_splGetFsSrv(), 9, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+}
+
+Result splFsSecureExpMod(void *input, void *modulus, void *dst) {
+    return _splSecureExpMod(_splGetFsSrv(), 10, input, modulus, dst);
+}
+
+Result splFsGenerateSpecificAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 wrapped_key[0x10];
+        u32 key_generation;
+        u32 option;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 12;
+    memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+    raw->key_generation = key_generation;
+    raw->option = option;
+
+    Result rc = serviceIpcDispatch(_splGetFsSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 sealed_key[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_sealed_key, resp->sealed_key, sizeof(resp->sealed_key));
+        }
+    }
+
+    return rc;
+}
+
+Result splFsLoadTitlekey(void *sealed_titlekey, u32 keyslot) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 sealed_titlekey[0x10];
+        u32 keyslot;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 19;
+    memcpy(raw->sealed_titlekey, sealed_titlekey, sizeof(raw->sealed_titlekey));
+    raw->keyslot = keyslot;
+
+    Result rc = serviceIpcDispatch(_splGetFsSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splFsGetPackage2Hash(void *out_hash) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 31;
+
+    Result rc = serviceIpcDispatch(&g_splFsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 package2_hash[0x20];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_hash, resp->package2_hash, sizeof(resp->package2_hash));
+        }
+    }
+
+    return rc;
+}
