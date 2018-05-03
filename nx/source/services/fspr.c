@@ -61,6 +61,8 @@ Result fsprRegisterProgram(u64 pid, u64 titleID, FsStorageId storageID, const vo
         u64 sid;
         u64 pid;
         u64 tid;
+        u64 fah_size;
+        u64 fac_size;
     } *raw;
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -69,6 +71,8 @@ Result fsprRegisterProgram(u64 pid, u64 titleID, FsStorageId storageID, const vo
     raw->sid = storageID;
     raw->pid = pid;
     raw->tid = titleID;
+    raw->fah_size = fah_size;
+    raw->fac_size = fac_size;
     
     Result rc = serviceIpcDispatch(&g_fsprSrv);
     
