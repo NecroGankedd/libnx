@@ -35,11 +35,11 @@ void splExit(void);
 Result splCryptoInitialize(void);
 void splCryptoExit(void);
 
-Result splEsInitialize(void);
-void splEsExit(void);
-
 Result splSslInitialize(void);
 void splSslExit(void);
+
+Result splEsInitialize(void);
+void splEsExit(void);
 
 Result splFsInitialize(void);
 void splFsExit(void);
@@ -67,16 +67,16 @@ Result splCryptoGetSecurityEngineEvent(Handle *out_event);
 
 Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version, void *dst, size_t dst_size);
 
-Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
+Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version);
+Result splSslSecureExpMod(void *input, void *modulus, void *dst);
+
+Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version);
 Result splEsUnwrapRsaOaepWrappedTitlekey(void *rsa_wrapped_titlekey, void *modulus, void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey);
 Result splEsUnwrapAesWrappedTitlekey(void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey);
 Result splEsImportRsaKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
 Result splEsSecureExpMod(void *input, void *modulus, void *dst);
 
-Result splSslImportRsaKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
-Result splSslSecureExpMod(void *input, void *modulus, void *dst);
-
-Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
+Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version);
 Result splFsSecureExpMod(void *input, void *modulus, void *dst);
 Result splFsGenerateSpecificAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
 Result splFsLoadTitlekey(void *sealed_titlekey, u32 keyslot);

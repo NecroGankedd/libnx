@@ -752,6 +752,7 @@ Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrappe
         u64 cmd_id;
         u8 sealed_kek[0x10];
         u8 wrapped_key[0x10];
+        u32 version;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -760,8 +761,89 @@ Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrappe
     raw->cmd_id = 13;
     memcpy(raw->sealed_kek, sealed_kek, sizeof(raw->sealed_kek));
     memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+    raw->version = version;
 
     Result rc = serviceIpcDispatch(_splGetRsaSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+/* Helper function for RSA key importing. */
+Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, wrapped_rsa_key, wrapped_rsa_key_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 sealed_kek[0x10];
+        u8 wrapped_key[0x10];
+        u32 version;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    memcpy(raw->sealed_kek, sealed_kek, sizeof(raw->sealed_kek));
+    memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+    raw->version = version;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+/* SPL ISslService functionality. */
+Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version) {
+    return _splImportSecureExpModKey(&g_splSslSrv, 26, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+}
+
+Result splSslSecureExpMod(void *input, void *modulus, void *dst) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, input, SPL_RSA_BUFFER_SIZE, 0);
+    ipcAddSendStatic(&c, modulus, SPL_RSA_BUFFER_SIZE, 1);
+    ipcAddRecvStatic(&c, dst, SPL_RSA_BUFFER_SIZE, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 27;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
