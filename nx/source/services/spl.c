@@ -1087,3 +1087,48 @@ Result splFsGetPackage2Hash(void *out_hash) {
 
     return rc;
 }
+
+/* SPL IManuService funcionality. */
+Result splManuEncryptRsaKeyForImport(void *sealed_kek_pre, void *wrapped_key_pre, void *sealed_kek_post, void *wrapped_kek_post, u32 option, void *wrapped_rsa_key, void *out_wrapped_rsa_key, size_t rsa_key_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, wrapped_rsa_key, rsa_key_size, 0);
+    ipcAddRecvStatic(&c, out_wrapped_rsa_key, rsa_key_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 sealed_kek_pre[0x10];
+        u8 wrapped_key_pre[0x10];
+        u8 sealed_kek_post[0x10];
+        u8 wrapped_kek_post[0x10];
+        u32 option;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 30;
+    memcpy(raw->sealed_kek_pre, sealed_kek_pre, sizeof(raw->sealed_kek_pre));
+    memcpy(raw->wrapped_key_pre, wrapped_key_pre, sizeof(raw->wrapped_key_pre));
+    memcpy(raw->sealed_kek_post, sealed_kek_post, sizeof(raw->sealed_kek_post));
+    memcpy(raw->wrapped_kek_post, wrapped_kek_post, sizeof(raw->wrapped_kek_post));
+    raw->option = option;
+
+    Result rc = serviceIpcDispatch(&g_splManuSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
