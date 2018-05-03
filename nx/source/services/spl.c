@@ -16,6 +16,9 @@ Service *_splGetGeneralSrv(void);
 Service *_splGetCryptoSrv(void);
 Service *_splGetRsaSrv(void);
 
+Service *_splGetEsSrv(void);
+Service *_splGetFsSrv(void);
+
 Service *_splGetGeneralSrv(void) {
     if (!kernelAbove400()) {
         return &g_splSrv;
@@ -58,6 +61,14 @@ Service *_splGetRsaSrv(void) {
     } else {
         return &g_splSslSrv;
     } 
+}
+
+Service *_splGetEsSrv(void) {
+    return kernelAbove400() ? &g_splEsSrv : &g_splSrv;
+}
+
+Service *_splGetFsSrv(void) {
+    return kernelAbove400() ? &g_splFsSrv : &g_splSrv;
 }
 
 /* There are like six services, so these helpers will initialize/exit the relevant services. */
@@ -740,7 +751,7 @@ Result splCryptoGetSecurityEngineEvent(Handle *out_event) {
 }
 
 /* SPL IRsaService functionality. NOTE: IRsaService is not a real part of inheritance, unlike ICryptoService/IGeneralService. */
-Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version, void *dst, size_t dst_size) {
+Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -781,7 +792,7 @@ Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrappe
 }
 
 /* Helper function for RSA key importing. */
-Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version) {
+Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -820,12 +831,7 @@ Result _splImportSecureExpModKey(Service *srv, u64 cmd_id, void *sealed_kek, voi
     return rc;
 }
 
-/* SPL ISslService functionality. */
-Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version) {
-    return _splImportSecureExpModKey(&g_splSslSrv, 26, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
-}
-
-Result splSslSecureExpMod(void *input, void *modulus, void *dst) {
+Result _splSecureExpMod(Service *srv, u64 cmd_id, void *input, void *modulus, void *dst) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -841,9 +847,9 @@ Result splSslSecureExpMod(void *input, void *modulus, void *dst) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 27;
+    raw->cmd_id = cmd_id;
 
-    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -858,4 +864,106 @@ Result splSslSecureExpMod(void *input, void *modulus, void *dst) {
     }
 
     return rc;
+}
+
+/* SPL ISslService functionality. */
+Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+    return _splImportSecureExpModKey(&g_splSslSrv, 26, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+}
+
+Result splSslSecureExpMod(void *input, void *modulus, void *dst) {
+    return _splSecureExpMod(&g_splSslSrv, 27, input, modulus, dst);
+}
+
+/* SPL IEsService functionality. */
+Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+    return _splImportSecureExpModKey(_splGetEsSrv(), 17, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+}
+
+Result splEsUnwrapRsaOaepWrappedTitlekey(void *rsa_wrapped_titlekey, void *modulus, void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, rsa_wrapped_titlekey, SPL_RSA_BUFFER_SIZE, 0);
+    ipcAddSendStatic(&c, modulus, SPL_RSA_BUFFER_SIZE, 1);
+    ipcAddSendStatic(&c, label_hash, label_hash_size, 2);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 key_generation;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 18;
+    raw->key_generation = key_generation;
+
+    Result rc = serviceIpcDispatch(_splGetEsSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 sealed_titlekey[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_sealed_titlekey, resp->sealed_titlekey, sizeof(resp->sealed_titlekey));
+        }
+    }
+
+    return rc;
+}
+
+Result splEsUnwrapAesWrappedTitlekey(void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 aes_wrapped_titlekey[0x10];
+        u32 key_generation;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 20;
+    memcpy(raw->aes_wrapped_titlekey, aes_wrapped_titlekey, sizeof(raw->aes_wrapped_titlekey));
+    raw->key_generation = key_generation;
+
+    Result rc = serviceIpcDispatch(_splGetEsSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 sealed_titlekey[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_sealed_titlekey, resp->sealed_titlekey, sizeof(resp->sealed_titlekey));
+        }
+    }
+
+    return rc;
+}
+
+Result splEsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+    return _splImportSecureExpModKey(&g_splEsSrv, 28, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+}
+
+Result splEsSecureExpMod(void *input, void *modulus, void *dst) {
+    return _splSecureExpMod(&g_splEsSrv, 29, input, modulus, dst);
 }

@@ -29,6 +29,11 @@ typedef enum {
     SplConfigItem_Package2Hash = 17
 } SplConfigItem;
 
+typedef enum {
+    RsaKeyVersion_Deprecated = 0,
+    RsaKeyVersion_Extended = 1
+} RsaKeyVersion;
+
 Result splInitialize(void);
 void splExit(void);
 
@@ -65,18 +70,18 @@ Result splCryptoLockAesEngine(u32 *out_keyslot);
 Result splCryptoUnlockAesEngine(u32 keyslot);
 Result splCryptoGetSecurityEngineEvent(Handle *out_event);
 
-Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version, void *dst, size_t dst_size);
+Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size);
 
-Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version);
+Result splSslLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splSslSecureExpMod(void *input, void *modulus, void *dst);
 
-Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version);
+Result splEsLoadRsaOaepKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splEsUnwrapRsaOaepWrappedTitlekey(void *rsa_wrapped_titlekey, void *modulus, void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey);
 Result splEsUnwrapAesWrappedTitlekey(void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey);
-Result splEsImportRsaKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
+Result splEsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splEsSecureExpMod(void *input, void *modulus, void *dst);
 
-Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version);
+Result splFsLoadSecureExpModKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splFsSecureExpMod(void *input, void *modulus, void *dst);
 Result splFsGenerateSpecificAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
 Result splFsLoadTitlekey(void *sealed_titlekey, u32 keyslot);
