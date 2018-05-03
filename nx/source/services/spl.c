@@ -403,7 +403,6 @@ Result splGetSharedData(u32 *out_value) {
 }
 
 /* SPL ICryptoService functionality. */
-
 Result splCryptoGenerateAesKek(void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -735,6 +734,45 @@ Result splCryptoGetSecurityEngineEvent(Handle *out_event) {
         if (R_SUCCEEDED(rc)) {
             *out_event = r.Handles[0];
         }
+    }
+
+    return rc;
+}
+
+/* SPL IRsaService functionality. NOTE: IRsaService is not a real part of inheritance, unlike ICryptoService/IGeneralService. */
+Result splRsaDecryptPrivateKey(void *sealed_kek, void *wrapped_key, void *wrapped_rsa_key, size_t wrapped_rsa_key_size, u32 version, void *dst, size_t dst_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, wrapped_rsa_key, wrapped_rsa_key_size, 0);
+    ipcAddRecvStatic(&c, dst, dst_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 sealed_kek[0x10];
+        u8 wrapped_key[0x10];
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 13;
+    memcpy(raw->sealed_kek, sealed_kek, sizeof(raw->sealed_kek));
+    memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+
+    Result rc = serviceIpcDispatch(_splGetRsaSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
