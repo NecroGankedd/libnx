@@ -401,3 +401,341 @@ Result splGetSharedData(u32 *out_value) {
 
     return rc;
 }
+
+/* SPL ICryptoService functionality. */
+
+Result splCryptoGenerateAesKek(void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 wrapped_kek[0x10];
+        u32 key_generation;
+        u32 option;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+    memcpy(raw->wrapped_kek, wrapped_kek, sizeof(raw->wrapped_kek));
+    raw->key_generation = key_generation;
+    raw->option = option;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 sealed_kek[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_sealed_kek, resp->sealed_kek, sizeof(resp->sealed_kek));
+        }
+    }
+
+    return rc;
+}
+
+Result splCryptoLoadAesKey(void *sealed_kek, void *wrapped_key, u32 keyslot) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 sealed_kek[0x10];
+        u8 wrapped_key[0x10];
+        u32 keyslot;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 3;
+    memcpy(raw->sealed_kek, sealed_kek, sizeof(raw->sealed_kek));
+    memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+    raw->keyslot = keyslot;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splCryptoGenerateAesKey(void *sealed_kek, void *wrapped_key, void *out_sealed_key) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 sealed_kek[0x10];
+        u8 wrapped_key[0x10];
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+    memcpy(raw->sealed_kek, sealed_kek, sizeof(raw->sealed_kek));
+    memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 sealed_key[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_sealed_key, resp->sealed_key, sizeof(resp->sealed_key));
+        }
+    }
+
+    return rc;
+}
+
+Result splCryptoDecryptAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 wrapped_key[0x10];
+        u32 key_generation;
+        u32 option;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 14;
+    memcpy(raw->wrapped_key, wrapped_key, sizeof(raw->wrapped_key));
+    raw->key_generation = key_generation;
+    raw->option = option;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 sealed_key[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_sealed_key, resp->sealed_key, sizeof(resp->sealed_key));
+        }
+    }
+
+    return rc;
+}
+
+Result splCryptoCryptAesCtr(void *input, void *output, size_t size, void *ctr) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendBuffer(&c, input, size, BufferType_Type1);
+    ipcAddRecvBuffer(&c, output, size, BufferType_Type1);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 ctr[0x10];
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 15;
+    memcpy(raw->ctr, ctr, sizeof(raw->ctr));
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splCryptoComputeCmac(void *input, size_t size, u32 keyslot, void *out_cmac) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, input, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 keyslot;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 16;
+    raw->keyslot = keyslot;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 cmac[0x10];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            memcpy(out_cmac, resp->cmac, sizeof(resp->cmac));
+        }
+    }
+
+    return rc;
+}
+
+Result splCryptoLockAesEngine(u32 *out_keyslot) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 21;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 keyslot;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            *out_keyslot = resp->keyslot;
+        }
+    }
+
+    return rc;
+}
+
+Result splCryptoUnlockAesEngine(u32 keyslot) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 keyslot;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 22;
+    raw->keyslot = keyslot;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splCryptoGetSecurityEngineEvent(Handle *out_event) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 23;
+
+    Result rc = serviceIpcDispatch(_splGetCryptoSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out_event = r.Handles[0];
+        }
+    }
+
+    return rc;
+}

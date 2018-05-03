@@ -59,7 +59,7 @@ Result splCryptoGenerateAesKek(void *wrapped_kek, u32 key_generation, u32 option
 Result splCryptoLoadAesKey(void *sealed_kek, void *wrapped_key, u32 keyslot);
 Result splCryptoGenerateAesKey(void *sealed_kek, void *wrapped_key, void *out_sealed_key);
 Result splCryptoDecryptAesKey(void *wrapped_key, u32 key_generation, u32 option, void *out_sealed_key);
-Result splCryptoCryptAesCtr(void *ctr, void *input, void *output, size_t size);
+Result splCryptoCryptAesCtr(void *input, void *output, size_t size, void *ctr);
 Result splCryptoComputeCmac(void *input, size_t size, u32 keyslot, void *out_cmac);
 Result splCryptoLockAesEngine(u32 *out_keyslot);
 Result splCryptoUnlockAesEngine(u32 keyslot);
