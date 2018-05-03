@@ -34,6 +34,7 @@ extern "C" {
 #include "switch/services/sm.h"
 #include "switch/services/fs.h"
 #include "switch/services/fsldr.h"
+#include "switch/services/fspr.h"
 #include "switch/services/acc.h"
 #include "switch/services/apm.h"
 #include "switch/services/applet.h"
