@@ -12,14 +12,14 @@ static Service g_splSrv, g_splCryptoSrv, g_splSslSrv, g_splEsSrv, g_splFsSrv, g_
 static u64 g_splRefCnt, g_splCryptoRefCnt, g_splSslRefCnt, g_splEsRefCnt, g_splFsRefCnt, g_splManuRefCnt;
 
 /* Helper prototypes for accessing handles. */
-static Service *_splGetGeneralSrv(void);
-static Service *_splGetCryptoSrv(void);
-static Service *_splGetRsaSrv(void);
+static Service* _splGetGeneralSrv(void);
+static Service* _splGetCryptoSrv(void);
+static Service* _splGetRsaSrv(void);
 
-static Service *_splGetEsSrv(void);
-static Service *_splGetFsSrv(void);
+static Service* _splGetEsSrv(void);
+static Service* _splGetFsSrv(void);
 
-Service *_splGetGeneralSrv(void) {
+Service* _splGetGeneralSrv(void) {
     if (!kernelAbove400()) {
         return &g_splSrv;
     }
@@ -31,7 +31,7 @@ Service *_splGetGeneralSrv(void) {
     }
 }
 
-Service *_splGetCryptoSrv(void) {
+Service* _splGetCryptoSrv(void) {
     if (!kernelAbove400()) {
         return &g_splSrv;
     }
@@ -49,7 +49,7 @@ Service *_splGetCryptoSrv(void) {
     }
 }
 
-Service *_splGetRsaSrv(void) {
+Service* _splGetRsaSrv(void) {
     if (!kernelAbove400()) {
         return &g_splSrv;
     }
@@ -63,11 +63,11 @@ Service *_splGetRsaSrv(void) {
     } 
 }
 
-Service *_splGetEsSrv(void) {
+Service* _splGetEsSrv(void) {
     return kernelAbove400() ? &g_splEsSrv : &g_splSrv;
 }
 
-Service *_splGetFsSrv(void) {
+Service* _splGetFsSrv(void) {
     return kernelAbove400() ? &g_splFsSrv : &g_splSrv;
 }
 
