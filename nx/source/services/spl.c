@@ -34,7 +34,7 @@ Service *_splGetCryptoSrv(void) {
     }
     
     if (serviceIsActive(&g_splManuSrv)) {
-        return return &g_splManuSrv;
+        return &g_splManuSrv;
     } else if (serviceIsActive(&g_splFsSrv)) {
         return &g_splFsSrv;
     } else if (serviceIsActive(&g_splEsSrv)) {
@@ -55,7 +55,7 @@ Service *_splGetRsaSrv(void) {
         return &g_splFsSrv;
     } else if (serviceIsActive(&g_splEsSrv)) {
         return &g_splEsSrv;
-    } else (serviceIsActive(&g_splSslSrv)) {
+    } else {
         return &g_splSslSrv;
     } 
 }
@@ -153,4 +153,251 @@ Result splManuInitialize(void) {
 
 void splManuExit(void) {
      return _splSrvExit(&g_splManuSrv, &g_splManuRefCnt);
+}
+
+
+/* SPL IGeneralService functionality. */
+Result splGetConfig(SplConfigItem config_item, u64 *out_config) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 config_item;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->config_item = config_item;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            *out_config = resp->out;
+        }
+    }
+
+    return rc;
+}
+
+Result splUserExpMod(void *input, void *modulus, void *exp, size_t exp_size, void *dst) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendStatic(&c, input, SPL_RSA_BUFFER_SIZE, 0);
+    ipcAddSendStatic(&c, exp, exp_size, 1);
+    ipcAddSendStatic(&c, modulus, SPL_RSA_BUFFER_SIZE, 2);
+    ipcAddRecvStatic(&c, dst, SPL_RSA_BUFFER_SIZE, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splSetConfig(SplConfigItem config_item, u64 value) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct PACKED {
+        u64 magic;
+        u64 cmd_id;
+        u32 config_item;
+        u64 value;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->config_item = config_item;
+    raw->value = value;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splGetRandomBytes(void *out, size_t out_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddRecvStatic(&c, out, out_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splIsDevelopment(u8 *out_is_development) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 is_development;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) {
+            *out_is_development = resp->is_development;
+        }
+    }
+
+    return rc;
+}
+
+Result splSetSharedData(u32 value) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 value;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 24;
+    raw->value = value;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result splGetSharedData(u32 *out_value) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 25;
+
+    Result rc = serviceIpcDispatch(_splGetGeneralSrv());
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 value;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        
+        if (R_SUCCEEDED(rc)) {
+            *out_value = resp->value;
+        }
+    }
+
+    return rc;
 }

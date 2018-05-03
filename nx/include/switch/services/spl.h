@@ -7,6 +7,8 @@
 #pragma once
 #include "../types.h"
 
+#define SPL_RSA_BUFFER_SIZE (0x100)
+
 typedef enum {
     SplConfigItem_DisableProgramVerification = 1,
     SplConfigItem_DramId = 2,
