@@ -47,6 +47,18 @@ Service *_splGetCryptoSrv(void) {
 }
 
 Service *_splGetRsaSrv(void) {
+    if (!kernelAbove400()) {
+        return &g_splSrv;
+    }
+    
+    if (serviceIsActive(&g_splFsSrv)) {
+        return &g_splFsSrv;
+    } else if (serviceIsActive(&g_splEsSrv)) {
+        return &g_splEsSrv;
+    } else (serviceIsActive(&g_splSslSrv)) {
+        return &g_splSslSrv;
+    } 
+}
 
 /* There are like six services, so these helpers will initialize/exit the relevant services. */
 Result _splSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
@@ -141,18 +153,4 @@ Result splManuInitialize(void) {
 
 void splManuExit(void) {
      return _splSrvExit(&g_splManuSrv, &g_splManuRefCnt);
-}
-
-
-    if (!kernelAbove400()) {
-        return &g_splSrv;
-    }
-    
-    if (serviceIsActive(&g_splFsSrv)) {
-        return &g_splFsSrv;
-    } else if (serviceIsActive(&g_splEsSrv)) {
-        return &g_splEsSrv;
-    } else (serviceIsActive(&g_splSslSrv)) {
-        return &g_splSslSrv;
-    } 
 }
