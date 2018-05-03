@@ -18,7 +18,7 @@ Result _splSrvInitialize(Service *srv, u64 *refcnt, const char *name) {
     if (serviceIsActive(srv))
         return 0;
     
-    return smGetService(src, name);
+    return smGetService(srv, name);
 }
 
 void _splSrvExit(Service *srv, u64 *refcnt) {
